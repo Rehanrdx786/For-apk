@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tekken 3 Downloader & Player</title>
+    <title>Tekken 3 Storage Downloader</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -23,14 +23,14 @@
         <!-- Status Box -->
         <div id="status-card" class="gaming-card w-full max-w-sm rounded-xl p-4 text-center">
             <h2 id="username" class="text-base font-bold text-yellow-400">Checking Storage...</h2>
-            <p id="storage-status" class="text-xs text-gray-300 mt-1">Checking if game files exist on device...</p>
+            <p id="storage-status" class="text-xs text-gray-300 mt-1">Verifying actual file chunks...</p>
         </div>
 
-        <!-- Download Section (Hidden by default until check) -->
+        <!-- Download Section -->
         <div id="download-section" class="gaming-card w-full max-w-sm rounded-xl p-4 text-center hidden">
-            <p class="text-xs text-gray-300 mb-3">Game files not found in device storage. Download required to play.</p>
+            <p class="text-xs text-gray-300 mb-3">Game files missing or incomplete on device storage.</p>
             <button onclick="startDownload()" class="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-700 font-bold rounded-xl shadow-lg text-xs uppercase tracking-wider active:scale-95 transition">
-                📥 Download Game Files (To Device)
+                📥 Download Game Files Now
             </button>
         </div>
 
@@ -40,7 +40,7 @@
             <div class="w-full bg-gray-800 rounded-full h-3 overflow-hidden border border-gray-700">
                 <div id="progress-bar" class="bg-gradient-to-r from-red-500 to-purple-500 h-full w-0 transition-all duration-150"></div>
             </div>
-            <p class="text-[10px] text-gray-500">Please keep this window open while downloading.</p>
+            <p class="text-[10px] text-gray-500">Keep window open while downloading.</p>
         </div>
 
         <!-- Game Play Container -->
@@ -52,7 +52,7 @@
             <div id="emulator-screen" class="bg-black rounded-lg w-full h-64 flex flex-col items-center justify-center relative overflow-hidden border border-purple-500/30">
                 <div class="text-center p-3">
                     <p class="text-sm font-bold text-green-400 mb-1">✔ Files Verified in Storage!</p>
-                    <p class="text-xs text-gray-300 mb-3">Files loaded locally from browser cache.</p>
+                    <p id="file-size-info" class="text-[10px] text-gray-400 mb-3">Loaded locally from browser memory.</p>
                     <button onclick="launchGame()" class="px-4 py-2 bg-red-600 font-bold text-xs rounded-lg uppercase shadow">Start Battle</button>
                 </div>
             </div>
@@ -77,13 +77,11 @@
         const DB_NAME = "TekkenStorageDB";
         const STORE_NAME = "roms";
         
-        // Files to download from your server
         const filesToDownload = [
             { name: "bios", url: "https://ludoearn.online/Taken3/system/SCPH1001.BIN" },
             { name: "cue", url: "https://ludoearn.online/Taken3/games/Tekken 3 (USA).cue" }
         ];
 
-        // Check IndexedDB on load
         window.addEventListener("DOMContentLoaded", () => {
             checkExistingFiles();
         });
@@ -111,23 +109,39 @@
                 let biosCheck = await new Promise((res) => { let req = store.get("bios"); req.onsuccess = () => res(req.result); });
                 let cueCheck = await new Promise((res) => { let req = store.get("cue"); req.onsuccess = () => res(req.result); });
 
-                if (biosCheck && cueCheck) {
+                // Strict check: files must exist and have actual content size > 100 bytes
+                if (biosCheck && cueCheck && biosCheck.size > 100 && cueCheck.size > 100) {
+                    let totalSize = ((biosCheck.size + cueCheck.size) / (1024 * 1024)).toFixed(2);
+                    document.getElementById('file-size-info').innerText = `Verified Size: ${totalSize} MB loaded from storage`;
                     document.getElementById('status-card').classList.add('hidden');
                     document.getElementById('game-container').classList.remove('hidden');
                 } else {
-                    document.getElementById('storage-status').innerText = "Status: Files missing on device.";
+                    // Clear broken/empty entries if any
+                    resetStorageSilent();
+                    document.getElementById('status-card').classList.add('hidden');
                     document.getElementById('download-section').classList.remove('hidden');
                 }
             } catch (err) {
                 console.error(err);
+                document.getElementById('status-card').classList.add('hidden');
                 document.getElementById('download-section').classList.remove('hidden');
             }
+        }
+
+        async function resetStorageSilent() {
+            try {
+                let db = await openDB();
+                let transaction = db.transaction(STORE_NAME, "readwrite");
+                let store = transaction.objectStore(STORE_NAME);
+                store.clear();
+            } catch(e) {}
         }
 
         async function startDownload() {
             document.getElementById('download-section').classList.add('hidden');
             document.getElementById('progress-container').classList.remove('hidden');
-            document.getElementById('storage-status').innerText = "Downloading files...";
+            document.getElementById('status-card').classList.remove('hidden');
+            document.getElementById('storage-status').innerText = "Downloading files from server...";
 
             try {
                 let db = await openDB();
@@ -160,7 +174,6 @@
                     }
 
                     let blob = new Blob(chunks);
-                    // Save to IndexedDB
                     await new Promise((resolve, reject) => {
                         let transaction = db.transaction(STORE_NAME, "readwrite");
                         let store = transaction.objectStore(STORE_NAME);
@@ -170,7 +183,6 @@
                     });
                 }
 
-                // Download finished successfully
                 document.getElementById('progress-container').classList.add('hidden');
                 document.getElementById('status-card').classList.add('hidden');
                 document.getElementById('game-container').classList.remove('hidden');
@@ -183,15 +195,12 @@
         }
 
         async function resetStorage() {
-            let db = await openDB();
-            let transaction = db.transaction(STORE_NAME, "readwrite");
-            let store = transaction.objectStore(STORE_NAME);
-            store.clear();
+            await resetStorageSilent();
             location.reload();
         }
 
         function launchGame() {
-            alert("Game starting from local device storage buffer!");
+            alert("Files are verified in device storage! Ready to plug into emulator core.");
         }
     </script>
 </body>
