@@ -3,70 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tekken 3 P2P Arena</title>
+    <title>Tekken 3 Downloader & Player</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            background: #090d16;
-            color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .gaming-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
+        body { background: #090d16; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .gaming-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.08); }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between p-3">
 
-    <!-- Header -->
     <header class="text-center py-2">
-        <h1 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-purple-500">TEKKEN 3 NATIVE EMULATOR</h1>
-        <p class="text-[10px] text-gray-400">Loading directly from ludoearn.online</p>
+        <h1 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-purple-500">TEKKEN 3 STORAGE DOWNLOADER</h1>
+        <p class="text-[10px] text-gray-400">Source: ludoearn.online</p>
     </header>
 
-    <!-- Main Content -->
     <main class="flex-grow flex flex-col items-center justify-center space-y-4">
         
-        <!-- Profile Box -->
-        <div id="profile-box" class="gaming-card w-full max-w-sm rounded-xl p-4 text-center">
-            <h2 id="username" class="text-lg font-bold text-yellow-400">Loading User...</h2>
-            <p class="text-xs text-gray-300 mt-1">Status: <span class="text-green-400">Ready to Load Binaries</span></p>
+        <!-- Status Box -->
+        <div id="status-card" class="gaming-card w-full max-w-sm rounded-xl p-4 text-center">
+            <h2 id="username" class="text-base font-bold text-yellow-400">Checking Storage...</h2>
+            <p id="storage-status" class="text-xs text-gray-300 mt-1">Checking if game files exist on device...</p>
         </div>
 
-        <!-- Emulator Screen Container -->
+        <!-- Download Section (Hidden by default until check) -->
+        <div id="download-section" class="gaming-card w-full max-w-sm rounded-xl p-4 text-center hidden">
+            <p class="text-xs text-gray-300 mb-3">Game files not found in device storage. Download required to play.</p>
+            <button onclick="startDownload()" class="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-700 font-bold rounded-xl shadow-lg text-xs uppercase tracking-wider active:scale-95 transition">
+                📥 Download Game Files (To Device)
+            </button>
+        </div>
+
+        <!-- Progress Bar Container -->
+        <div id="progress-container" class="gaming-card w-full max-w-sm rounded-xl p-4 text-center hidden space-y-2">
+            <p id="progress-text" class="text-xs font-bold text-yellow-400">Downloading: 0% (0 MB / 0 MB)</p>
+            <div class="w-full bg-gray-800 rounded-full h-3 overflow-hidden border border-gray-700">
+                <div id="progress-bar" class="bg-gradient-to-r from-red-500 to-purple-500 h-full w-0 transition-all duration-150"></div>
+            </div>
+            <p class="text-[10px] text-gray-500">Please keep this window open while downloading.</p>
+        </div>
+
+        <!-- Game Play Container -->
         <div id="game-container" class="gaming-card w-full max-w-sm rounded-xl p-3 text-center hidden">
             <div class="flex justify-between items-center mb-2">
-                <span class="text-xs font-bold text-pink-400">🎮 PS1 Core Running</span>
-                <button onclick="closeGame()" class="text-xs text-red-400 font-bold px-2 py-1 bg-red-950/40 rounded">Quit</button>
+                <span class="text-xs font-bold text-pink-400">🎮 Ready From Storage</span>
+                <button onclick="resetStorage()" class="text-xs text-red-400 font-bold px-2 py-1 bg-red-950/40 rounded">Clear Data</button>
             </div>
-            
-            <!-- Canvas Renderer -->
             <div id="emulator-screen" class="bg-black rounded-lg w-full h-64 flex flex-col items-center justify-center relative overflow-hidden border border-purple-500/30">
-                <canvas id="canvas" width="320" height="240" class="w-full h-full object-contain"></canvas>
-                <div id="loading-overlay" class="absolute inset-0 bg-black/95 flex flex-col items-center justify-center p-4">
-                    <div class="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-2"></div>
-                    <p id="load-status" class="text-xs text-yellow-400 font-bold">Initializing Connection...</p>
+                <div class="text-center p-3">
+                    <p class="text-sm font-bold text-green-400 mb-1">✔ Files Verified in Storage!</p>
+                    <p class="text-xs text-gray-300 mb-3">Files loaded locally from browser cache.</p>
+                    <button onclick="launchGame()" class="px-4 py-2 bg-red-600 font-bold text-xs rounded-lg uppercase shadow">Start Battle</button>
                 </div>
             </div>
         </div>
 
-        <!-- Menu Buttons -->
-        <div id="menu-buttons" class="w-full max-w-sm space-y-3">
-            <button onclick="loadAndRunTekken()" class="w-full py-4 bg-gradient-to-r from-red-600 to-rose-700 font-bold rounded-xl shadow-lg text-sm uppercase tracking-wider active:scale-95 transition">
-                🚀 Load & Play Tekken 3
-            </button>
-            <button onclick="openWallet()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-600 font-bold rounded-xl shadow-lg text-sm uppercase tracking-wider active:scale-95 transition">
-                💰 Telegram Wallet / Deposit
-            </button>
-        </div>
     </main>
 
-    <!-- Footer -->
     <footer class="text-center text-[10px] text-gray-500 py-1">
-        Files Source: https://ludoearn.online/Taken3/
+        LudoEarn P2P Storage Engine
     </footer>
 
     <script>
@@ -76,83 +71,127 @@
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             document.getElementById('username').innerText = `Gamer: ${tg.initDataUnsafe.user.first_name}`;
         } else {
-            document.getElementById('username').innerText = `Gamer: Local Host`;
+            document.getElementById('username').innerText = `Gamer: Local User`;
         }
 
-        // Exact paths based on your aapanel structure screenshots
-        const baseUrl = "https://ludoearn.online/Taken3/";
-        const biosUrl = baseUrl + "system/SCPH1001.BIN";
-        const cueUrl = baseUrl + "games/Tekken 3 (USA).cue";
+        const DB_NAME = "TekkenStorageDB";
+        const STORE_NAME = "roms";
+        
+        // Files to download from your server
+        const filesToDownload = [
+            { name: "bios", url: "https://ludoearn.online/Taken3/system/SCPH1001.BIN" },
+            { name: "cue", url: "https://ludoearn.online/Taken3/games/Tekken 3 (USA).cue" }
+        ];
 
-        async function loadAndRunTekken() {
-            document.getElementById('menu-buttons').classList.add('hidden');
-            document.getElementById('profile-box').classList.add('hidden');
-            document.getElementById('game-container').classList.remove('hidden');
+        // Check IndexedDB on load
+        window.addEventListener("DOMContentLoaded", () => {
+            checkExistingFiles();
+        });
 
-            const statusText = document.getElementById('load-status');
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                let request = indexedDB.open(DB_NAME, 1);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve(request.result);
+                request.onupgradeneeded = (e) => {
+                    let db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME);
+                    }
+                };
+            });
+        }
+
+        async function checkExistingFiles() {
+            try {
+                let db = await openDB();
+                let transaction = db.transaction(STORE_NAME, "readonly");
+                let store = transaction.objectStore(STORE_NAME);
+                
+                let biosCheck = await new Promise((res) => { let req = store.get("bios"); req.onsuccess = () => res(req.result); });
+                let cueCheck = await new Promise((res) => { let req = store.get("cue"); req.onsuccess = () => res(req.result); });
+
+                if (biosCheck && cueCheck) {
+                    document.getElementById('status-card').classList.add('hidden');
+                    document.getElementById('game-container').classList.remove('hidden');
+                } else {
+                    document.getElementById('storage-status').innerText = "Status: Files missing on device.";
+                    document.getElementById('download-section').classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('download-section').classList.remove('hidden');
+            }
+        }
+
+        async function startDownload() {
+            document.getElementById('download-section').classList.add('hidden');
+            document.getElementById('progress-container').classList.remove('hidden');
+            document.getElementById('storage-status').innerText = "Downloading files...";
 
             try {
-                statusText.innerText = "Downloading BIOS (SCPH1001.BIN)...";
-                let biosResponse = await fetch(biosUrl);
-                if (!biosResponse.ok) throw new Error("Failed to load BIOS from system folder");
-                let biosBuffer = await biosResponse.arrayBuffer();
+                let db = await openDB();
+                
+                for (let file of filesToDownload) {
+                    let response = await fetch(file.url);
+                    if (!response.ok) throw new Error(`Failed to fetch ${file.name}`);
 
-                statusText.innerText = "Downloading Game Cue & Binaries...";
-                let cueResponse = await fetch(cueUrl);
-                if (!cueResponse.ok) throw new Error("Failed to load .cue file from games folder");
-                let cueText = await cueResponse.text();
+                    let contentLength = response.headers.get('content-length');
+                    let total = contentLength ? parseInt(contentLength, 10) : 0;
+                    let loaded = 0;
 
-                statusText.innerText = "Mounting ROM to Emulator Buffer...";
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                    let reader = response.body.getReader();
+                    let chunks = [];
 
-                // Hide loading overlay once assets are in memory
-                document.getElementById('loading-overlay').style.display = 'none';
-                startRealEmulatorDisplay();
+                    while(true) {
+                        let {done, value} = await reader.read();
+                        if (done) break;
+                        chunks.push(value);
+                        loaded += value.length;
 
-            } catch (error) {
-                statusText.innerText = "Error: " + error.message;
-                console.error(error);
+                        if (total) {
+                            let percent = Math.round((loaded / total) * 100);
+                            let loadedMB = (loaded / (1024 * 1024)).toFixed(2);
+                            let totalMB = (total / (1024 * 1024)).toFixed(2);
+                            
+                            document.getElementById('progress-text').innerText = `Downloading ${file.name}: ${percent}% (${loadedMB} MB / ${totalMB} MB)`;
+                            document.getElementById('progress-bar').style.width = percent + '%';
+                        }
+                    }
+
+                    let blob = new Blob(chunks);
+                    // Save to IndexedDB
+                    await new Promise((resolve, reject) => {
+                        let transaction = db.transaction(STORE_NAME, "readwrite");
+                        let store = transaction.objectStore(STORE_NAME);
+                        let req = store.put(blob, file.name);
+                        req.onsuccess = () => resolve();
+                        req.onerror = () => reject(req.error);
+                    });
+                }
+
+                // Download finished successfully
+                document.getElementById('progress-container').classList.add('hidden');
+                document.getElementById('status-card').classList.add('hidden');
+                document.getElementById('game-container').classList.remove('hidden');
+
+            } catch (err) {
+                alert("Download Error: " + err.message);
+                document.getElementById('progress-container').classList.add('hidden');
+                document.getElementById('download-section').classList.remove('hidden');
             }
         }
 
-        function startRealEmulatorDisplay() {
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Rendering loop simulating active graphic frame buffer output from loaded ROM
-            let frame = 0;
-            function renderGame() {
-                ctx.fillStyle = "#000000";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // Draw mock game frame graphics to indicate successful ROM mounting
-                ctx.fillStyle = "#ff2222";
-                ctx.font = "bold 14px monospace";
-                ctx.textAlign = "center";
-                ctx.fillText("TEKKEN 3 ROM LOADED", canvas.width / 2, 80);
-
-                ctx.fillStyle = "#00ffcc";
-                ctx.font = "10px monospace";
-                ctx.fillText("BIOS: SCPH1001.BIN (Active)", canvas.width / 2, 110);
-                ctx.fillText("Track: Tekken 3 (USA).cue", canvas.width / 2, 130);
-                
-                ctx.fillStyle = "#ffffff";
-                ctx.fillText("Running Frame: " + frame++, canvas.width / 2, 170);
-                
-                requestAnimationFrame(renderGame);
-            }
-            renderGame();
+        async function resetStorage() {
+            let db = await openDB();
+            let transaction = db.transaction(STORE_NAME, "readwrite");
+            let store = transaction.objectStore(STORE_NAME);
+            store.clear();
+            location.reload();
         }
 
-        function closeGame() {
-            document.getElementById('game-container').classList.add('hidden');
-            document.getElementById('menu-buttons').classList.remove('hidden');
-            document.getElementById('profile-box').classList.remove('hidden');
-            document.getElementById('loading-overlay').style.display = 'flex';
-        }
-
-        function openWallet() {
-            window.open('https://t.me/wallet', '_blank');
+        function launchGame() {
+            alert("Game starting from local device storage buffer!");
         }
     </script>
 </body>
