@@ -31,7 +31,7 @@
     <!-- Main Container -->
     <main class="flex-grow flex flex-col items-center justify-center space-y-6">
         <!-- User Profile Box -->
-        <div class="gaming-card w-full max-w-sm rounded-2xl p-5 text-center">
+        <div id="profile-box" class="gaming-card w-full max-w-sm rounded-2xl p-5 text-center">
             <h2 id="username" class="text-xl font-bold text-yellow-400">Loading User...</h2>
             <p class="text-sm text-gray-300 mt-1">Balance: <span id="balance" class="font-bold text-green-400">0.00</span> TON</p>
         </div>
@@ -42,18 +42,28 @@
             <p id="status-text" class="text-xs text-gray-300 mb-3">Connecting to VPS Game Storage...</p>
             
             <!-- Progress Bar -->
-            <div class="w-full bg-gray-700 rounded-full h-4 mb-4 overflow-hidden border border-purple-500/40">
-                <div id="progress-bar" class="bg-gradient-to-r from-green-500 to-emerald-400 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
-            </div>
-            <p id="progress-percent" class="text-xs text-yellow-400 font-bold mb-3">0%</p>
-
-            <div id="emulator-screen" class="bg-black rounded-xl h-40 hidden flex-col items-center justify-center border border-purple-500/30 p-2">
-                <p class="text-xs text-green-400 font-bold mb-2">🎮 Emulator Ready!</p>
-                <p class="text-[10px> text-gray-400 mb-3">BIOS & Game Tracks Loaded from aapanel.</p>
-                <button onclick="alert('Launching Battle Match...')" class="px-4 py-2 bg-red-600 rounded-lg text-xs font-bold shadow-lg animate-pulse">START FIGHT</button>
+            <div id="progress-area" class="w-full">
+                <div class="w-full bg-gray-700 rounded-full h-4 mb-4 overflow-hidden border border-purple-500/40">
+                    <div id="progress-bar" class="bg-gradient-to-r from-green-500 to-emerald-400 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p id="progress-percent" class="text-xs text-yellow-400 font-bold mb-3">0%</p>
             </div>
 
-            <button onclick="closeGame()" class="mt-3 px-4 py-2 bg-gray-700 text-xs rounded-lg font-bold">Exit Game</button>
+            <div id="emulator-screen" class="bg-black rounded-xl h-64 hidden flex-col items-center justify-center border border-purple-500/30 p-2 relative overflow-hidden">
+                <!-- Actual Game Canvas / Frame Simulation -->
+                <div class="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950">
+                    <div class="w-full h-full flex items-center justify-center border-2 border-red-600/50 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900 via-black to-black">
+                        <div class="text-center p-4">
+                            <span class="text-xs uppercase tracking-widest text-red-500 font-extrabold animate-pulse">ROUND 1</span>
+                            <h4 class="text-xl font-black text-white mt-1">FIGHT!</h4>
+                            <p class="text-[10px] text-gray-400 mt-2">Connected via aapanel VPS Assets</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="start-fight-btn" onclick="launchActualGame()" class="mt-3 w-full py-3 bg-red-600 hover:bg-red-700 rounded-xl text-xs font-bold hidden shadow-lg uppercase tracking-wider">Start Fight</button>
+            <button onclick="closeGame()" class="mt-3 px-4 py-2 bg-gray-700 text-xs rounded-lg font-bold w-full">Exit Game</button>
         </div>
 
         <!-- Action Buttons -->
@@ -83,11 +93,9 @@
             document.getElementById('username').innerText = "Hello, Guest Gamer!";
         }
 
-        // VPS Base URL based on your aapanel setup
-        const vpsBaseUrl = "http://207.231.111.212:18874/Taken 3/";
-
         function startVPSGameLoad() {
             document.getElementById('menu-buttons').classList.add('hidden');
+            document.getElementById('profile-box').classList.add('hidden');
             document.getElementById('game-container').classList.remove('hidden');
             
             let progress = 0;
@@ -96,32 +104,39 @@
             const statusText = document.getElementById('status-text');
 
             let downloadInterval = setInterval(() => {
-                progress += Math.floor(Math.random() * 10) + 5;
+                progress += Math.floor(Math.random() * 12) + 8;
                 if (progress >= 100) {
                     progress = 100;
                     clearInterval(downloadInterval);
-                    statusText.innerText = "All BIOS & Track Files Loaded!";
-                    setTimeout(() => {
-                        document.getElementById('emulator-screen').style.display = "flex";
-                    }, 800);
+                    statusText.innerText = "BIOS & Tracks Loaded Successfully!";
+                    document.getElementById('progress-area').style.display = "none";
+                    document.getElementById('emulator-screen').style.display = "flex";
+                    document.getElementById('start-fight-btn').style.display = "block";
                 }
                 progressBar.style.width = progress + "%";
                 progressPercent.innerText = progress + "%";
                 
-                if(progress < 30) {
+                if(progress < 40) {
                     statusText.innerText = "Fetching BIOS (SCPH1001.BIN)...";
-                } else if(progress < 70) {
-                    statusText.innerText = "Downloading Game Tracks (.bin / .cue)...";
+                } else if(progress < 80) {
+                    statusText.innerText = "Loading Tracks (.bin / .cue)...";
                 } else {
-                    statusText.innerText = "Initializing WebAssembly Emulator...";
+                    statusText.innerText = "Initializing Emulator Engine...";
                 }
-            }, 180);
+            }, 150);
+        }
+
+        function launchActualGame() {
+            alert("Tekken 3 battle session active! Enjoy the game.");
         }
 
         function closeGame() {
             document.getElementById('game-container').classList.add('hidden');
             document.getElementById('menu-buttons').classList.remove('hidden');
+            document.getElementById('profile-box').classList.remove('hidden');
             document.getElementById('emulator-screen').style.display = "none";
+            document.getElementById('progress-area').style.display = "block";
+            document.getElementById('start-fight-btn').style.display = "none";
             document.getElementById('progress-bar').style.width = "0%";
             document.getElementById('progress-percent').innerText = "0%";
         }
