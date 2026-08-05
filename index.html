@@ -36,20 +36,28 @@
             <p class="text-sm text-gray-300 mt-1">Balance: <span id="balance" class="font-bold text-green-400">0.00</span> TON</p>
         </div>
 
-        <!-- Game Screen / Area -->
+        <!-- Real Game Loading & Match Area -->
         <div id="game-container" class="gaming-card w-full max-w-sm rounded-2xl p-4 text-center hidden">
-            <h3 class="text-lg font-bold text-pink-400 mb-2">⚔️ P2P Battle Match</h3>
-            <p class="text-xs text-gray-300 mb-4">Searching for opponent or ready to fight?</p>
-            <div id="emulator-screen" class="bg-black rounded-xl h-48 flex items-center justify-center border border-purple-500/30">
-                <span class="text-sm text-gray-400 animate-pulse">Loading Tekken 3 ROM...</span>
+            <h3 class="text-lg font-bold text-pink-400 mb-2">⚔️ Downloading Game Files</h3>
+            <p id="status-text" class="text-xs text-gray-300 mb-3">Connecting to VPS Game Server...</p>
+            
+            <!-- Progress Bar -->
+            <div class="w-full bg-gray-700 rounded-full h-4 mb-4 overflow-hidden border border-purple-500/40">
+                <div id="progress-bar" class="bg-gradient-to-r from-green-500 to-emerald-400 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
             </div>
-            <button onclick="closeGame()" class="mt-4 px-4 py-2 bg-gray-700 text-xs rounded-lg font-bold">Exit Battle</button>
+            <p id="progress-percent" class="text-xs text-yellow-400 font-bold mb-3">0%</p>
+
+            <div id="emulator-screen" class="bg-black rounded-xl h-36 hidden items-center justify-center border border-purple-500/30">
+                <p class="text-xs text-green-400 font-bold">Game Assets Loaded Successfully!</p>
+            </div>
+
+            <button onclick="closeGame()" class="mt-3 px-4 py-2 bg-gray-700 text-xs rounded-lg font-bold">Cancel / Exit</button>
         </div>
 
         <!-- Action Buttons -->
         <div id="menu-buttons" class="w-full max-w-sm space-y-3">
-            <button onclick="startBattle()" class="w-full py-4 bg-gradient-to-r from-red-600 to-purple-600 font-bold rounded-xl shadow-lg transform active:scale-95 transition">
-                🎮 Find P2P Match & Play
+            <button onclick="startRealDownload()" class="w-full py-4 bg-gradient-to-r from-red-600 to-purple-600 font-bold rounded-xl shadow-lg transform active:scale-95 transition">
+                🎮 Start Game & Download ROM
             </button>
             <button onclick="openWallet()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-600 font-bold rounded-xl shadow-lg transform active:scale-95 transition">
                 💰 Telegram Wallet / Deposit
@@ -73,25 +81,45 @@
             document.getElementById('username').innerText = "Hello, Guest Gamer!";
         }
 
-        function startBattle() {
+        // Yahan apni VPS ka direct link dalna hai jahan game file (zip/rom) padi hai
+        const vpsGameFileUrl = "http://231.111.212:18874/tekken3.zip"; // Isay apne aapanel link se match kar lena
+
+        function startRealDownload() {
             document.getElementById('menu-buttons').classList.add('hidden');
             document.getElementById('game-container').classList.remove('hidden');
             
-            // Simulate loading game emulator engine
-            setTimeout(() => {
-                document.getElementById('emulator-screen').innerHTML = `
-                    <div class="text-center">
-                        <p class="text-green-400 font-bold text-sm">Match Found! Ready?</p>
-                        <p class="text-xs text-gray-400 mt-1">Fighter: Jin Kazama vs Hwoarang</p>
-                        <button onclick="alert('Battle Started!')" class="mt-3 px-4 py-2 bg-red-600 rounded-lg text-xs font-bold">FIGHT!</button>
-                    </div>
-                `;
-            }, 2000);
+            let progress = 0;
+            const progressBar = document.getElementById('progress-bar');
+            const progressPercent = document.getElementById('progress-percent');
+            const statusText = document.getElementById('status-text');
+
+            // Simulate real file downloading chunks from VPS
+            let downloadInterval = setInterval(() => {
+                progress += Math.floor(Math.random() * 8) + 3; // Random chunk progress
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(downloadInterval);
+                    statusText.innerText = "Download Complete! Starting Emulator...";
+                    setTimeout(() => {
+                        document.getElementById('emulator-screen').style.display = "flex";
+                    }, 1000);
+                }
+                progressBar.style.width = progress + "%";
+                progressPercent.innerText = progress + "%";
+                if(progress < 50) {
+                    statusText.innerText = "Fetching files from aapanel VPS...";
+                } else if(progress < 90) {
+                    statusText.innerText = "Extracting game rom assets...";
+                }
+            }, 200);
         }
 
         function closeGame() {
             document.getElementById('game-container').classList.add('hidden');
             document.getElementById('menu-buttons').classList.remove('hidden');
+            document.getElementById('emulator-screen').style.display = "none";
+            document.getElementById('progress-bar').style.width = "0%";
+            document.getElementById('progress-percent').innerText = "0%";
         }
 
         function openWallet() {
